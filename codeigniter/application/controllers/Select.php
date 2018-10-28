@@ -1,20 +1,49 @@
 <?php
 class Select extends CI_Controller
 {
+
+   
     function index() {
 
-        $filepath='inputfile/Invoice.csv';
-        $file = new SplFileObject($filepath); 
-        $file->setFlags(SplFileObject::READ_CSV); 
-        foreach($file as $line):
-            //終端の空行を除く処理　空行の場合に取れる値は後述
+        $CustomerName=array(
+            20=>"アートバンライン 舞洲",
+            2=>"シューワ（株）",
+            21=>"東和運輸株式会社 本社",
+        );
 
-                $records[] = $line;
-            
-        endforeach;
+        $ClosedYear=array(
+            0=>2018,
+            1=>2019,
+            2=>2020,
+            3=>2021,
+            4=>2022,
 
-        $this->load->view('select');
+        );
+
+        $ClosedMonth=array(
+            1=>1,
+            2=>2,
+            3=>3,
+            4=>4,
+            5=>5,
+            6=>6,
+            7=>7,
+            8=>8,
+            9=>9,
+            10=>10,
+            11=>11,
+            12=>12,
+        );
+
+        $data['CustomerName']=$CustomerName;
+        $data['ClosedYear']=$ClosedYear;
+        $data['ClosedMonth']=$ClosedMonth;
+        
+
+        
+        $this->load->view('select',$data);
         
     }
+
 }
 ?>

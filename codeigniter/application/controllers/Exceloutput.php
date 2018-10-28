@@ -14,7 +14,98 @@ class Exceloutput extends CI_Controller
 {
     function index() {
 
-    
+        $CustomerName=array(
+            20=>"アートバンライン 舞洲",
+            2=>"シューワ（株）",
+            21=>"東和運輸株式会社 本社",
+        );
+
+       
+        $ClosedYear=array(
+            0=>2018,
+            1=>2019,
+            2=>2020,
+            3=>2021,
+            4=>2022,
+
+        );
+
+        $ClosedMonth=array(
+            1=>1,
+            2=>2,
+            3=>3,
+            4=>4,
+            5=>5,
+            6=>6,
+            7=>7,
+            8=>8,
+            9=>9,
+            10=>10,
+            11=>11,
+            12=>12,
+        );
+
+        $invoice_data = $this->get_csv('inputfile/Invoice.csv');
+        $invoice_detail_data = $this->get_csv('inputfile/InvoiceDetail.csv');
+        $customer_data= $this->get_csv('inputfile/Customer.csv');
+
+        $request=$_POST;
+
+        $customer_id=$request['CustomerId'];
+        $closed_year=$ClosedYear[$request['ClosedYear']];
+        $closed_month=$ClosedMonth[$request['ClosedMonth']];
+        $customer_name=$CustomerName[$customer_id];
+
+        $customer=array();
+
+        for($i=0;$i<count($customer_data);$i++):
+
+            if($customer_data[$i]['CustomerId']==$customer_id):
+
+                $customer=$customer_data[$i];
+
+                break;
+
+            endif;
+
+        endfor;
+
+        $invoice=array();
+
+        for($i=0;$i<count($invoice_data);$i++):
+
+            $year=substr($invoice_data[$i]['Date'],0,4);
+
+            $month=substr($invoice_data[$i]['Date'],5,2);
+
+            if($invoice_data[$i]['CustomerId']==$customer_id AND $year==$closed_year AND $month==$closed_month):
+
+                $invoice=$invoice_data[$i];
+
+                break;
+
+            endif;
+            
+        endfor;
+
+        $invoice_detail=array();
+
+        for($i=0;$i<count($invoice_detail_data);$i++):
+
+            if($invoice_detail_data[$i]['InvoiceId']==$invoice['Id']):
+
+                $invoice_detail[]=$invoice_detail_data[$i];
+
+            endif;
+            
+        endfor;
+
+        foreach ((array) $invoice_detail as $key => $value) {
+            $sort[$key] = $value['HouseCardNumber'];
+        }
+        
+        $invoice_num=array_multisort($sort, SORT_ASC, $invoice_detail);
+
         $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
 
@@ -48,6 +139,7 @@ class Exceloutput extends CI_Controller
         $sheet->mergecells('I11:J11');
         $sheet->mergecells('K11:O11');
         $sheet->mergecells('K12:O12');
+        $sheet->mergecells('C13:F13');
         $sheet->mergecells('K13:O13');
         $sheet->mergecells('J15:P15');
         $sheet->mergecells('J16:P16');
@@ -127,20 +219,24 @@ class Exceloutput extends CI_Controller
         $sheet->getStyle('A1:P9')
                  ->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
         $sheet->setCellValue('A2', '請求書NO.');
-        $sheet->getStyle('A2')
-                 ->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
         $sheet->getStyle('G1')->getFont()->setSize(24);
         $sheet->getStyle('G1')
         ->getBorders()->getBottom()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
         $sheet->setCellValue('G1', '請求書');
+        $sheet->setCellValue('H4',$closed_year.'年'.$closed_month.'日末日');
         $sheet->setCellValue('N2', 'ページ');
         $sheet->setCellValue('G4', '請求日');
         $sheet->getStyle('I5')->getFont()->setSize(36);
         $sheet->setCellValue('I5', 'シューワ株式会社');
+        $sheet->setCellValue('B9', $customer['CustomerZipCode']);
+        $sheet->setCellValue('B10', $customer['CustomerAddress1']);
+        $sheet->setCellValue('B11', $customer['CustomerAddress2']);
         $sheet->setCellValue('I11', '〒599-8242');
         $sheet->setCellValue('K11', '大阪府堺市中区陶器北244-5');
         $sheet->setCellValue('K12', 'TEL:072-236-8846');
+        $sheet->setCellValue('C13', $customer['CustomerName']);
         $sheet->setCellValue('K13', 'FAX:072-236-6588');
+        $sheet->setCellValue('F14','様');
         $sheet->getStyle('J15:P18')
         ->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
         $sheet->getStyle('J15:P18')
@@ -210,14 +306,35 @@ class Exceloutput extends CI_Controller
         $sheet->setCellValue('I'.($row_oiltax_sum), '**軽油税計**');
         $sheet->setCellValue('I'.($row_consum_sum), '**消費税計**');
  
-        $sheet->getRowDimension(60)->setRowHeight(60);
+        $sheet->getRowDimension($row++)->setRowHeight(50);
+        $sheet->getRowDimension($row++)->setRowHeight(25);        
         //2ページ目(請求明細書)
         //これ以降はイテレータがベースになるので、rowごとの処理(マージ、フォント、内容、罫線)
-        $car_sum=16;
         
-        $car=1;
+        $car=array();
+
+        $car_num=-1;
+
+        for($i=0;$i<count($invoice_detail);$i++):
+
+            if($car_num!=$invoice_detail[$i]['HouseCardNumber']):
+
+                $car[]=$invoice_detail[$i]['HouseCardNumber'];
+                $car_num=$invoice_detail[$i]['HouseCardNumber'];
+
+            endif;
+            
+        endfor;
+        
+        $car_sum=count($car);
+        
+        $car_num=0;
 
         $page_all=ceil($car_sum/3)+1;
+
+        $item_cnt=0;
+
+        $all_total=0;
 
         for($page_number=2;$page_number<=$page_all;$page_number++):
 
@@ -230,6 +347,7 @@ class Exceloutput extends CI_Controller
             $sheet->mergecells('G'.$row++.':J'.$row--);
             $sheet->getStyle('G'.$row)->getFont()->setSize(24);
             $sheet->setCellValue('G'.$row++, '請求明細書');
+            $sheet->getRowDimension($row++)->setRowHeight(25);        
             $sheet->setCellValue('N'.$row, 'ページ');
             $sheet->setCellValue('O'.$row, $page_number.'/'.$page_all);
         
@@ -239,25 +357,23 @@ class Exceloutput extends CI_Controller
             $sheet->getStyle('A'.$row.':H'.$row)
             ->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
 
-            for($car_table=1;$car_table<=3;$car_table++):
 
-                if($car>$car_sum):
+            for($table=1;$table<=3;$table++):
 
-                    break;
+                $total=0;
 
-                else:
-
-                    $car++;
-
-                endif;
 
                 $row++;
-
-               
-    
                 
                 $sheet->setCellValue('A'.++$row, '車番');
-                $sheet->setCellValue('B'.$row++, '');
+                $sheet->setCellValue('B'.$row++,$car[$car_num]);
+
+                $car_table=array();
+                for($i=0;$i<count($invoice_detail);$i++):
+                    if($invoice_detail[$i]['HouseCardNumber']==$car[$car_num]):
+                        $car_table[]=$invoice_detail[$i];
+                    endif;
+                endfor;
 
                 $table_begin=$row;
         
@@ -280,23 +396,42 @@ class Exceloutput extends CI_Controller
                 ->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
 
         
-                for ($cnt=0;$cnt<13;$cnt++):
+                for ($cnt=0;$cnt<12;$cnt++):
 
-                    $sheet->mergecells('A'.$row.':B'.$row);
-                    $sheet->setCellValue('A'.$row, '');
-                    $sheet->mergecells('C'.$row.':F'.$row);
-                    $sheet->setCellValue('C'.$row, '');
-                    $sheet->mergecells('G'.$row.':J'.$row);
-                    $sheet->setCellValue('G'.$row, '');
-                    $sheet->mergecells('K'.$row.':L'.$row);
-                    $sheet->setCellValue('K'.$row, '');
-                    $sheet->mergecells('M'.$row.':N'.$row);
-                    $sheet->setCellValue('M'.$row, '');
-                    $sheet->mergecells('O'.$row.':P'.$row);
-                    $sheet->setCellValue('O'.$row++, '');
+                    if($item_cnt<count($car_table)):
 
+                        
+
+                        $sheet->mergecells('A'.$row.':B'.$row);
+                        $sheet->setCellValue('A'.$row, substr($car_table[$item_cnt]['Date'],5,5));
+                        $sheet->mergecells('C'.$row.':F'.$row);
+                        $sheet->setCellValue('C'.$row, $car_table[$item_cnt]['ServiceStationName']);
+                        $sheet->mergecells('G'.$row.':J'.$row);
+                        $sheet->setCellValue('G'.$row, $car_table[$item_cnt]['ItemName']);
+                        $sheet->mergecells('K'.$row.':L'.$row);
+                        $sheet->setCellValue('K'.$row, $car_table[$item_cnt]['Amount']);
+                        $sheet->mergecells('M'.$row.':N'.$row);
+                        $sheet->setCellValue('M'.$row,  $car_table[$item_cnt]['Price']);
+                        $sheet->mergecells('O'.$row.':P'.$row);
+                        $sheet->setCellValue('O'.$row,  $car_table[$item_cnt]['Total']);
+                        $total+=$car_table[$item_cnt]['Total'];
+                        $item_cnt++;
+                    else:
+                        $sheet->mergecells('A'.$row.':B'.$row);
+                        $sheet->mergecells('C'.$row.':F'.$row);
+                        $sheet->mergecells('G'.$row.':J'.$row);
+                        $sheet->mergecells('K'.$row.':L'.$row);
+                        $sheet->mergecells('M'.$row.':N'.$row);
+                        $sheet->mergecells('O'.$row.':P'.$row);
+                    endif;
+                    $row++;
 
                 endfor;
+
+                if($item_cnt>=count($car_table)):
+                    $car_num++;
+                    $item_cnt=0;
+                endif;
 
                 $sheet->getStyle('A'.$table_begin.':P'.$row)
                 ->getBorders()->getVertical()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
@@ -333,7 +468,8 @@ class Exceloutput extends CI_Controller
                 $sheet->mergecells('K'.$row.':M'.$row);   
                 $sheet->setCellValue('K'.$row, '');
                 $sheet->mergecells('N'.$row++.':P'.$row--);
-                $sheet->setCellValue('N'.$row++, '');
+                $sheet->setCellValue('N'.$row++, $total);
+                $all_total+=$total;
 
                 $sheet->getStyle('A'.$row)
                 ->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
@@ -354,6 +490,7 @@ class Exceloutput extends CI_Controller
                 $sheet->getStyle('A'.$table_begin.':P'.$row)
                 ->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
 
+                $sheet->getRowDimension($row++)->setRowHeight(25);        
             endfor;
 
             $sheet->getRowDimension(++$row)->setRowHeight(25);
@@ -361,6 +498,8 @@ class Exceloutput extends CI_Controller
             $row++;
 
         endfor;
+
+        $sheet->setCellValue('J26',$all_total);
         
 
         //
@@ -380,6 +519,48 @@ class Exceloutput extends CI_Controller
 
         $this->load->view('exceloutput');
         
+    }
+
+             /**
+     * CSVローダー
+     *
+     * @param string $csvfile CSVファイルパス
+     * @param string $mode `sjis` ならShift-JISでカンマ区切り、 `utf16` ならUTF-16LEでタブ区切りのCSVを読む。'utf8'なら文字コード変換しないでカンマ区切り。
+     * @return array ヘッダ列をキーとした配列を返す
+     */
+    function get_csv($csvfile, $mode='sjis')
+    {
+        // ファイル存在確認
+        if(!file_exists($csvfile)) return false;
+    
+        $filter = $csvfile;
+    
+        // SplFileObject()を使用してCSVロード
+        $file = new SplFileObject($filter);
+        if($mode === 'utf16') $file->setCsvControl("\t");
+        $file->setFlags(
+            SplFileObject::READ_CSV |
+            SplFileObject::SKIP_EMPTY |
+            SplFileObject::READ_AHEAD
+        );
+    
+        // 各行を処理
+        $records = array();
+        foreach ($file as $i => $row)
+        {
+            // 1行目はキーヘッダ行として取り込み
+            if($i===0) {
+                foreach($row as $j => $col) $colbook[$j] = $col;
+                continue;
+            }
+    
+            // 2行目以降はデータ行として取り込み
+            $line = array();
+            foreach($colbook as $j=>$col) $line[$colbook[$j]] = @$row[$j];
+            $records[] = $line;
+        }
+        return $records;
+        //return $colbook;
     }
 }
 
