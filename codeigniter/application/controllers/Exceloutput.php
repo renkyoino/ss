@@ -45,6 +45,22 @@ class Exceloutput extends CI_Controller
             12=>12,
         );
 
+        $ItemType=array(
+            "Unspecified"=>0,
+            "HighOctanOil"=>1,
+            "NormalOil"=>2,
+            "LightOil"=>3,
+            "KeroceneOil"=>4,
+            "NotOil"=>99,
+            "Unspecified_tax"=>100,
+            "HighOctanOil_tax"=>101,
+            "NormalOil_tax"=>102,
+            "LightOil_tax"=>103,
+            "KeroceneOil_tax"=>104,
+            "NotOil_tax"=>199,
+            
+        );
+
         $invoice_data = $this->get_csv('inputfile/Invoice.csv');
         $invoice_detail_data = $this->get_csv('inputfile/InvoiceDetail.csv');
         $customer_data= $this->get_csv('inputfile/Customer.csv');
@@ -109,8 +125,27 @@ class Exceloutput extends CI_Controller
         $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
 
+        $car=array();
+
+        $car_num=-1;
+
+        for($i=0;$i<count($invoice_detail);$i++):
+
+            if($car_num!=$invoice_detail[$i]['HouseCardNumber']):
+
+                $car[]=$invoice_detail[$i]['HouseCardNumber'];
+                $car_num=$invoice_detail[$i]['HouseCardNumber'];
+
+            endif;
+            
+        endfor;
+        
+        $car_sum=count($car);    
+        $car_num=0;
+        $page_all=ceil($car_sum/3)+1;
+
         //デフォルト罫線
-        $sheet->getStyle('A1:Q500')
+        $sheet->getStyle('A1:Q'.($page_all*62-1))
             ->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE);
 
 
@@ -120,7 +155,7 @@ class Exceloutput extends CI_Controller
         
 
         //デフォルト行幅の設定
-        for($default_row=1;$default_row<500;$default_row++):
+        for($default_row=1;$default_row<($page_all*62-1);$default_row++):
             $sheet->getRowDimension($default_row)->setRowHeight(15);
         endfor;
 
@@ -225,6 +260,7 @@ class Exceloutput extends CI_Controller
         $sheet->setCellValue('G1', '請求書');
         $sheet->setCellValue('H4',$closed_year.'年'.$closed_month.'日末日');
         $sheet->setCellValue('N2', 'ページ');
+        $sheet->setCellValue('O2', '1/'.$page_all);
         $sheet->setCellValue('G4', '請求日');
         $sheet->getStyle('I5')->getFont()->setSize(36);
         $sheet->setCellValue('I5', 'シューワ株式会社');
@@ -311,30 +347,17 @@ class Exceloutput extends CI_Controller
         //2ページ目(請求明細書)
         //これ以降はイテレータがベースになるので、rowごとの処理(マージ、フォント、内容、罫線)
         
-        $car=array();
-
-        $car_num=-1;
-
-        for($i=0;$i<count($invoice_detail);$i++):
-
-            if($car_num!=$invoice_detail[$i]['HouseCardNumber']):
-
-                $car[]=$invoice_detail[$i]['HouseCardNumber'];
-                $car_num=$invoice_detail[$i]['HouseCardNumber'];
-
-            endif;
-            
-        endfor;
         
-        $car_sum=count($car);
         
-        $car_num=0;
-
-        $page_all=ceil($car_sum/3)+1;
-
-        $item_cnt=0;
-
         $all_total=0;
+        $lightoil_subtotal_all=0;
+        $lightoil_amount_all=0;
+        $consum_tax_all=0;
+        $oiltax_total_all=0;
+        $oiltax_amount_all=0;
+        
+
+
 
         for($page_number=2;$page_number<=$page_all;$page_number++):
 
@@ -354,16 +377,27 @@ class Exceloutput extends CI_Controller
             $sheet->mergecells('C'.$row.':D'.$row++);
             $sheet->setCellValue('A'.$row, '得意先');
             $sheet->mergecells('B'.$row.':H'.$row);
+            $sheet->setCellValue('B'.$row, $customer['CustomerName']);
             $sheet->getStyle('A'.$row.':H'.$row)
             ->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
 
 
             for($table=1;$table<=3;$table++):
 
+                if($car_num>=$car_sum):
+                    break;
+                endif;
+
                 $total=0;
-
-
+                $item_cnt=0;
                 $row++;
+                $table_row=0;
+                $lightoil_amount=0;
+                $lightoil_subtotal=0;
+                $oiltax_amount=0;
+                $oiltax_total=0;
+                $consum_tax=0;
+                $oiltax_unit=32.1;
                 
                 $sheet->setCellValue('A'.++$row, '車番');
                 $sheet->setCellValue('B'.$row++,$car[$car_num]);
@@ -394,44 +428,100 @@ class Exceloutput extends CI_Controller
                 $sheet->setCellValue('O'.$row, '金額');
                 $sheet->getStyle('A'.$row.':P'.$row++)
                 ->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-
+                
+               
         
-                for ($cnt=0;$cnt<12;$cnt++):
+                for ($cnt=0;$cnt<30;$cnt++):
 
-                    if($item_cnt<count($car_table)):
+                    if($item_cnt<count($car_table) and $car_table[$item_cnt]['OilTaxFlag']==1):
 
-                        
+                        $oiltax_amount+=$car_table[$item_cnt]['Amount'];
 
-                        $sheet->mergecells('A'.$row.':B'.$row);
-                        $sheet->setCellValue('A'.$row, substr($car_table[$item_cnt]['Date'],5,5));
-                        $sheet->mergecells('C'.$row.':F'.$row);
-                        $sheet->setCellValue('C'.$row, $car_table[$item_cnt]['ServiceStationName']);
-                        $sheet->mergecells('G'.$row.':J'.$row);
-                        $sheet->setCellValue('G'.$row, $car_table[$item_cnt]['ItemName']);
-                        $sheet->mergecells('K'.$row.':L'.$row);
-                        $sheet->setCellValue('K'.$row, $car_table[$item_cnt]['Amount']);
-                        $sheet->mergecells('M'.$row.':N'.$row);
-                        $sheet->setCellValue('M'.$row,  $car_table[$item_cnt]['Price']);
-                        $sheet->mergecells('O'.$row.':P'.$row);
-                        $sheet->setCellValue('O'.$row,  $car_table[$item_cnt]['Total']);
+                        $oiltax_total+=$car_table[$item_cnt]['Total'];
+
                         $total+=$car_table[$item_cnt]['Total'];
+
                         $item_cnt++;
+
                     else:
-                        $sheet->mergecells('A'.$row.':B'.$row);
-                        $sheet->mergecells('C'.$row.':F'.$row);
-                        $sheet->mergecells('G'.$row.':J'.$row);
-                        $sheet->mergecells('K'.$row.':L'.$row);
-                        $sheet->mergecells('M'.$row.':N'.$row);
-                        $sheet->mergecells('O'.$row.':P'.$row);
+                        
+                        if($item_cnt<count($car_table)):
+
+                            $sheet->mergecells('A'.$row.':B'.$row);
+                            $sheet->setCellValue('A'.$row, substr($car_table[$item_cnt]['Date'],5,5));
+                            $sheet->mergecells('C'.$row.':F'.$row);
+                            $sheet->setCellValue('C'.$row, $car_table[$item_cnt]['ServiceStationName']);
+                            $sheet->mergecells('G'.$row.':J'.$row);
+                            $sheet->setCellValue('G'.$row, $car_table[$item_cnt]['ItemName']);
+                            $sheet->mergecells('K'.$row.':L'.$row);
+                            $sheet->setCellValue('K'.$row, $car_table[$item_cnt]['Amount']);
+                            $sheet->mergecells('M'.$row.':N'.$row);
+                            $sheet->setCellValue('M'.$row,  $car_table[$item_cnt]['Price']);
+                            $sheet->mergecells('O'.$row.':P'.$row);
+                            $sheet->setCellValue('O'.$row,  round($car_table[$item_cnt]['SubTotal']));
+                            $lightoil_amount+=$car_table[$item_cnt]['Amount'];
+                            $lightoil_subtotal+=$car_table[$item_cnt]['SubTotal'];
+                            $consum_tax+= $car_table[$item_cnt]['ConsumptionTax'];
+                            $total+=$car_table[$item_cnt]['Total'];
+                            $table_row++;
+                            $item_cnt++;
+                            
+                        elseif($item_cnt==count($car_table)):
+                        
+                            $sheet->mergecells('A'.$row.':B'.$row);
+                            $sheet->mergecells('C'.$row.':F'.$row);
+                            $sheet->mergecells('G'.$row.':J'.$row);
+                            $sheet->setCellValue('G'.$row,'軽油税');
+                            $sheet->mergecells('K'.$row.':L'.$row);
+                            $sheet->setCellValue('K'.$row,$oiltax_amount);
+                            $oiltax_amount_all+=$oiltax_amount;
+                            $sheet->mergecells('M'.$row.':N'.$row);
+                            $sheet->setCellValue('M'.$row,$oiltax_unit);
+                            $sheet->mergecells('O'.$row.':P'.$row);
+                            $sheet->setCellValue('O'.$row,  round($oiltax_total));
+                            $oiltax_total_all+=$oiltax_total;
+                            $table_row++;
+                            $item_cnt++;
+                        
+                        elseif($item_cnt==count($car_table)+1):
+                            
+                            $sheet->mergecells('A'.$row.':B'.$row);
+                            $sheet->mergecells('C'.$row.':F'.$row);
+                            $sheet->mergecells('G'.$row.':J'.$row);
+                            $sheet->setCellValue('G'.$row,'消費税');
+                            $sheet->mergecells('K'.$row.':L'.$row);
+                            $sheet->mergecells('M'.$row.':N'.$row);
+                            $sheet->mergecells('O'.$row.':P'.$row);
+                            $sheet->setCellValue('O'.$row,  round($consum_tax));
+                            $consum_tax_all+=$consum_tax;
+                            $table_row++;
+                            $item_cnt++;
+
+                        elseif($item_cnt>count($car_table)+1):
+                            $sheet->mergecells('A'.$row.':B'.$row);
+                            $sheet->mergecells('C'.$row.':F'.$row);
+                            $sheet->mergecells('G'.$row.':J'.$row);
+                            $sheet->mergecells('K'.$row.':L'.$row);
+                            $sheet->mergecells('M'.$row.':N'.$row);
+                            $sheet->mergecells('O'.$row.':P'.$row);
+                            $table_row++;
+
+                        endif;
+
+                        $row++;
+
+                        if ($table_row>11):
+
+                            break;
+
+                        endif;
+                        
                     endif;
-                    $row++;
+                    
 
                 endfor;
 
-                if($item_cnt>=count($car_table)):
-                    $car_num++;
-                    $item_cnt=0;
-                endif;
+                
 
                 $sheet->getStyle('A'.$table_begin.':P'.$row)
                 ->getBorders()->getVertical()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
@@ -455,42 +545,34 @@ class Exceloutput extends CI_Controller
 
                 $sheet->getStyle('A'.$row)
                 ->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-                $sheet->mergecells('A'.$row.':B'.$row);
+                $sheet->mergecells('A'.$row++.':B'.$row--);
                 $sheet->setCellValue('A'.$row, '数量');
-                $sheet->mergecells('C'.$row.':D'.$row);
+                $sheet->mergecells('C'.$row++.':D'.$row--);
                 $sheet->setCellValue('C'.$row, '');
-                $sheet->mergecells('E'.$row.':F'.$row); 
+                $sheet->mergecells('E'.$row++.':F'.$row--); 
                 $sheet->setCellValue('E'.$row, '');
-                $sheet->mergecells('G'.$row.':H'.$row);
-                $sheet->setCellValue('G'.$row, '');
-                $sheet->mergecells('I'.$row.':J'.$row);
+                $sheet->mergecells('G'.$row++.':H'.$row--);
+                $sheet->setCellValue('G'.$row, $lightoil_amount);
+                $lightoil_amount_all+=$lightoil_amount;
+                $lightoil_subtotal_all+=$lightoil_subtotal;
+                $sheet->mergecells('I'.$row++.':J'.$row--);
                 $sheet->setCellValue('I'.$row, '');
-                $sheet->mergecells('K'.$row.':M'.$row);   
+                $sheet->mergecells('K'.$row++.':M'.$row--);   
                 $sheet->setCellValue('K'.$row, '');
                 $sheet->mergecells('N'.$row++.':P'.$row--);
-                $sheet->setCellValue('N'.$row++, $total);
+                $sheet->setCellValue('N'.$row++, round($total));
                 $all_total+=$total;
-
-                $sheet->getStyle('A'.$row)
-                ->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-                $sheet->mergecells('A'.$row.':B'.$row);
-                $sheet->setCellValue('A'.$row, '金額');
-                $sheet->mergecells('C'.$row.':D'.$row);
-                $sheet->setCellValue('C'.$row, '');
-                $sheet->mergecells('E'.$row.':F'.$row); 
-                $sheet->setCellValue('E'.$row, '');
-                $sheet->mergecells('G'.$row.':H'.$row);
-                $sheet->setCellValue('G'.$row, '');
-                $sheet->mergecells('I'.$row.':J'.$row);
-                $sheet->setCellValue('I'.$row, '');
-                $sheet->mergecells('K'.$row.':M'.$row);   
-                $sheet->setCellValue('K'.$row, '');
                 $sheet->getStyle('A'.($row-2).':P'.$row)
                 ->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
                 $sheet->getStyle('A'.$table_begin.':P'.$row)
                 ->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
 
-                $sheet->getRowDimension($row++)->setRowHeight(25);        
+                $sheet->getRowDimension($row++)->setRowHeight(25);
+                
+               
+                $car_num++;
+                   
+               
             endfor;
 
             $sheet->getRowDimension(++$row)->setRowHeight(25);
@@ -499,7 +581,23 @@ class Exceloutput extends CI_Controller
 
         endfor;
 
-        $sheet->setCellValue('J26',$all_total);
+        $item_subtotal=0;
+
+        $sheet->setCellValue('J26',round($all_total));
+        $sheet->setCellValue('A'.$row_table_start,'軽油');
+        $sheet->setCellValue('E'.$row_table_start,$lightoil_amount_all);
+        $sheet->setCellValue('G'.$row_table_start,round($lightoil_subtotal_all));
+        $item_subtotal+=$lightoil_amount_all;
+        $sheet->setCellValue('O'.($row_product_sum), round($item_subtotal));
+        $sheet->setCellValue('M'.($row_oiltax_sum), $oiltax_amount_all);
+        $sheet->setCellValue('O'.($row_oiltax_sum), round($oiltax_total_all));
+        $sheet->setCellValue('O'.($row_consum_sum), round($consum_tax_all));
+
+
+        
+        
+
+
         
 
         //
