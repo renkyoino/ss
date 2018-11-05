@@ -145,89 +145,189 @@ class Exceloutput extends CI_Controller
         $page_all=ceil($car_sum/3)+1;
 
         //デフォルト罫線
-        $sheet->getStyle('A1:Q'.($page_all*62-1))
+        $sheet->getStyle('A1:Q'.($page_all*52-2))
             ->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE);
 
 
         
         //デフォルト文字サイズの設定
-        $spreadsheet->getDefaultStyle()->getFont()->setSize(10);
+        $spreadsheet->getDefaultStyle()->getFont()->setSize(16);
         
 
         //デフォルト行幅の設定
-        for($default_row=1;$default_row<($page_all*62-1);$default_row++):
-            $sheet->getRowDimension($default_row)->setRowHeight(15);
+        for($default_row=1;$default_row<($page_all*52-2);$default_row++):
+            $sheet->getRowDimension($default_row)->setRowHeight(22);
         endfor;
 
 
         //1ページ目(請求書)
 
         //セルのマージ
-        $sheet->mergecells('A2:B2');
-        $sheet->mergecells('C2:E2');
-        $sheet->mergecells('G1:J2');
-        $sheet->mergecells('H4:J4');
-        $sheet->mergecells('I5:P9');
-        $sheet->mergecells('B9:C9');
-        $sheet->mergecells('B10:E10');
-        $sheet->mergecells('B11:E11');
-        $sheet->mergecells('I11:J11');
-        $sheet->mergecells('K11:O11');
-        $sheet->mergecells('K12:O12');
-        $sheet->mergecells('C13:F13');
-        $sheet->mergecells('K13:O13');
-        $sheet->mergecells('J15:P15');
-        $sheet->mergecells('J16:P16');
-        $sheet->mergecells('J17:P17');
-        $sheet->mergecells('J18:P18');
-        $sheet->mergecells('B19:F19');
-        $sheet->mergecells('B20:F20');
-        $sheet->mergecells('H20:K20');
-        $sheet->mergecells('H21:K21');
-        $sheet->mergecells('A24:C24');
-        $sheet->mergecells('A25:C25');
-        $sheet->mergecells('D24:F24');
-        $sheet->mergecells('D25:F25');
-        $sheet->mergecells('G24:I24');
-        $sheet->mergecells('G25:I25');
-        $sheet->mergecells('J24:M24');
-        $sheet->mergecells('J25:M25');
-        $sheet->mergecells('N24:P24');
-        $sheet->mergecells('N25:P25');
-        $sheet->mergecells('A26:C27');
-        $sheet->mergecells('D26:F27');
-        $sheet->mergecells('G26:I27');
-        $sheet->mergecells('J26:M27');
-        $sheet->mergecells('N26:P27');
-        $sheet->mergecells('H29:I29');
-        $sheet->mergecells('K29:N29');
-        $sheet->mergecells('G31:H31');
-        $sheet->mergecells('G32:H32');
-        $sheet->mergecells('G33:H33');
-        $sheet->mergecells('I32:K32');
-        $sheet->mergecells('I33:K33');
-        $sheet->mergecells('N32:O32');
-        $sheet->mergecells('N33:O33');
-        $sheet->mergecells('C36:N37');
-        $sheet->mergecells('B39:C39');
-        $sheet->mergecells('A40:D41');
-        $sheet->mergecells('E40:F41');
-        $sheet->mergecells('G40:H41');
-        $sheet->mergecells('I40:L41');
-        $sheet->mergecells('M40:N41');
-        $sheet->mergecells('O40:P41');
-        $sheet->mergecells('G40:H41');
-        $sheet->mergecells('G40:H41');
 
-        $row=42;
+        
+        
+        //ヒナ型部分の作成
+        $row=1;
+
+        $sheet->getStyle('A'.$row.':P'.($row+7))
+                 ->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('G'.$row)->getFont()->setSize(24);
+        $sheet->getStyle('G'.$row)
+        ->getBorders()->getBottom()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        $sheet->setCellValue('G'.$row, '請求書');
+        $sheet->mergecells('G'.$row++.':J'.$row);
+        $sheet->mergecells('A'.$row.':B'.$row);
+        $sheet->setCellValue('A'.$row, '請求書NO.');
+        $sheet->mergecells('C'.$row.':E'.$row);
+        $sheet->setCellValue('C'.$row, '');
+        $sheet->mergecells('N'.$row.':O'.$row);
+        $sheet->setCellValue('N'.$row, 'ページ');
+        $sheet->setCellValue('P'.$row, '1/'.$page_all);
+        $sheet->setCellValue('G'.$row, '請求日');
+        $sheet->mergecells('H'.($row=$row+2).':J'.$row);
+        $sheet->setCellValue('H'.$row++,$closed_year.'年'.$closed_month.'日末日');
+        $sheet->getStyle('I'.$row)->getFont()->setSize(36);
+        $sheet->setCellValue('I'.$row, 'シューワ株式会社');
+        $sheet->mergecells('I'.$row.':P'.($row=$row+4));
+        $sheet->mergecells('B'.$row.':C'.$row);
+        $sheet->setCellValue('B'.$row++, '〒'.$customer['CustomerZipCode']);
+        $sheet->mergecells('B'.$row.':G'.($row+1));
+        $sheet->getStyle('B'.$row)->getFont()->setSize(24);
+        $sheet->setCellValue('B'.$row++, $customer['CustomerAddress1']);
+        $sheet->mergecells('B'.($row+1).':G'.($row+2));
+        $sheet->getStyle('B'.($row+1))->getFont()->setSize(24);
+        $sheet->setCellValue('B'.($row+1), $customer['CustomerAddress2']);
+        $sheet->mergecells('I'.$row.':J'.$row);
+        $sheet->setCellValue('I'.$row, '〒599-8242');
+        $sheet->mergecells('K'.$row.':O'.$row++);
+        $sheet->setCellValue('K'.$row, '大阪府堺市中区陶器北244-5');
+        $sheet->mergecells('K'.$row.':O'.$row++);
+        $sheet->setCellValue('K'.$row++, 'TEL:072-236-8846');
+        $sheet->mergecells('B'.$row.':F'.($row+1));
+        $sheet->getStyle('B'.$row)->getFont()->setSize(24);
+        $sheet->setCellValue('B'.$row, $customer['CustomerName']);
+        $sheet->mergecells('K'.$row.':O'.$row);
+        $sheet->setCellValue('K'.$row++, 'FAX:072-236-6588');
+        $sheet->setCellValue('G'.$row,'様');
+        $sheet->mergecells('J'.$row.':P'.$row++);
+        $sheet->mergecells('J'.$row.':P'.$row++);
+        $sheet->mergecells('J'.$row.':P'.$row++);
+        $sheet->mergecells('J'.$row.':P'.$row);
+        $sheet->getStyle('J'.($row-3).':P'.$row)
+        ->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        $sheet->getStyle('J'.($row-3).':P'.$row)
+        ->getBorders()->getVertical()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        $row++;
+        $sheet->mergecells('B'.$row.':G'.$row);
+        $sheet->setCellValue('B'.$row++, ' 毎度お引き立て頂き、有難うございます。');
+        $sheet->mergecells('B'.$row.':G'.$row);
+        $sheet->setCellValue('B'.$row, '下記の通りご請求申し上げます。');
+        $sheet->mergecells('H'.$row.':K'.$row);
+        $sheet->setCellValue('H'.$row++, ' 本書に関してのお問い合わせは、');
+        $sheet->mergecells('H'.$row.':K'.$row);
+        $sheet->setCellValue('H'.$row, '上記の担当者までお願い致します。');
+        $row=$row+3;
+        $sheet->getStyle('A'.$row.':P'.($row+3))
+        ->getBorders()->getVertical()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        $sheet->getStyle('A'.$row.':C'.($row+1))
+        ->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        $sheet->getStyle('A'.$row.':P'.($row+1))
+        ->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $sheet->mergecells('A'.$row.':C'.$row);
+        $sheet->setCellValue('A'.$row, '前月請求額');
+        $sheet->mergecells('D'.$row.':F'.$row);
+        $sheet->setCellValue('D'.$row, '前月ご入金額');
+        $sheet->mergecells('G'.$row.':I'.$row);
+        $sheet->setCellValue('G'.$row, '繰越残高');
+        $sheet->mergecells('J'.$row.':M'.$row);
+        $sheet->setCellValue('J'.$row, '当月ご請求額');
+        $sheet->mergecells('N'.$row.':P'.$row);
+        $sheet->setCellValue('N'.$row, '当月ご請求残高');
+        $sheet->getStyle('A'.$row.':C'.($row+1))
+        ->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        $sheet->getStyle('D'.$row.':F'.($row+1))
+        ->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        $sheet->getStyle('G'.$row.':I'.($row+1))
+        ->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        $sheet->getStyle('J'.$row.':M'.($row+1))
+        ->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        $sheet->getStyle('N'.$row.':O'.$row++)
+        ->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        $sheet->mergecells('A'.$row.':C'.$row);
+        $sheet->setCellValue('A'.$row, '(A)');
+        $sheet->mergecells('D'.$row.':F'.$row);
+        $sheet->setCellValue('D25', '(B)');
+        $sheet->mergecells('G'.$row.':I'.$row);
+        $sheet->setCellValue('G'.$row, '(C=A-B)');
+        $sheet->mergecells('J'.$row.':M'.$row);
+        $sheet->setCellValue('J'.$row, '(D)');
+        $sheet->mergecells('N'.$row.':P'.$row);
+        $sheet->setCellValue('N'.$row++, '(E=C+D)');
+        $sheet->mergecells('A'.$row.':C'.($row+1));
+        $sheet->getStyle('A'.$row.':C'.($row+1))
+        ->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        $sheet->mergecells('D'.$row.':F'.($row+1));
+        $sheet->getStyle('D'.$row.':F'.($row+1))
+        ->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        $sheet->mergecells('G'.$row.':I'.($row+1));
+        $sheet->getStyle('G'.$row.':I'.($row+1))
+        ->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        $sheet->mergecells('J'.$row.':M'.($row+1));
+        $sheet->getStyle('J'.$row.':M'.($row+1))
+        ->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        $sheet->mergecells('N'.$row.':P'.($row+1));
+        $sheet->getStyle('N'.$row.':P'.($row+1))
+        ->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        $row=$row+3;
+        $sheet->mergecells('G'.$row.':I'.$row);
+        $sheet->setCellValue('G'.$row, 'お支払予定日');
+        $sheet->mergecells('K'.$row.':N'.$row++);
+        $row++;
+        $sheet->mergecells('G'.$row.':H'.$row);
+        $sheet->setCellValue('G'.$row++, '取引銀行');
+        $sheet->mergecells('G'.$row.':H'.$row);
+        $sheet->mergecells('J'.$row.':L'.$row);
+        $sheet->mergecells('N'.$row.':O'.$row++);
+        $sheet->mergecells('G'.$row.':H'.$row);
+        $sheet->mergecells('J'.$row.':L'.$row);
+        $sheet->mergecells('N'.$row.':O'.$row++);
+        $row=$row+1;
+        $sheet->mergecells('C'.$row.':E'.$row);
+        $sheet->setCellValue('C'.$row, '<御案内>');
+        $sheet->getStyle('C'.$row++.':N'.($row+1))
+        ->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        $sheet->mergecells('C'.$row.':N'.($row+1));
+        $sheet->getStyle('C'.$row.':N'.($row+1))
+        ->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        $sheet->getStyle('C'.$row.':N'.($row++))
+        ->getBorders()->getTop()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE);
+        $row=$row+2;
+        $sheet->mergecells('B'.$row.':C'.$row);
+        $sheet->setCellValue('B'.$row++, '[商品別御請求額]');
+        $sheet->getStyle('A'.$row.':P'.($row+1))
+        ->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        $sheet->mergecells('A'.$row.':D'.($row+1));
+        $sheet->setCellValue('A'.$row, '商品名');
+        $sheet->mergecells('E'.$row.':F'.($row+1));
+        $sheet->setCellValue('E'.$row, '数量');
+        $sheet->mergecells('G'.$row.':H'.($row+1));
+        $sheet->setCellValue('G'.$row, '金額');
+        $sheet->mergecells('I'.$row.':L'.($row+1));
+        $sheet->setCellValue('I'.$row, '商品名');
+        $sheet->mergecells('M'.$row.':N'.($row+1));
+        $sheet->setCellValue('M'.$row, '数量');
+        $sheet->mergecells('O'.$row.':P'.($row+1));
+        $sheet->setCellValue('O'.$row++, '金額');
+
+        $row++;
 
         $row_table_start=$row;
 
-        $row_product_sum=$row+15;
+        $row_product_sum=$row+7;
         $row_oiltax_sum=$row_product_sum+1;
         $row_consum_sum=$row_oiltax_sum+1;
 
-        for($cnt=0; $cnt<18; $cnt++):
+        for($cnt=0; $cnt<10; $cnt++):
 
             $sheet->mergeCells('A'.($row).':D'.($row));
             $sheet->mergeCells('E'.($row).':F'.($row));
@@ -249,101 +349,11 @@ class Exceloutput extends CI_Controller
         
         $sheet->mergeCells('M'.($row).':N'.($row));
             
-        
-        //ヒナ型部分の作成
-        $sheet->getStyle('A1:P9')
-                 ->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-        $sheet->setCellValue('A2', '請求書NO.');
-        $sheet->getStyle('G1')->getFont()->setSize(24);
-        $sheet->getStyle('G1')
-        ->getBorders()->getBottom()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-        $sheet->setCellValue('G1', '請求書');
-        $sheet->setCellValue('H4',$closed_year.'年'.$closed_month.'日末日');
-        $sheet->setCellValue('N2', 'ページ');
-        $sheet->setCellValue('O2', '1/'.$page_all);
-        $sheet->setCellValue('G4', '請求日');
-        $sheet->getStyle('I5')->getFont()->setSize(36);
-        $sheet->setCellValue('I5', 'シューワ株式会社');
-        $sheet->setCellValue('B9', $customer['CustomerZipCode']);
-        $sheet->setCellValue('B10', $customer['CustomerAddress1']);
-        $sheet->setCellValue('B11', $customer['CustomerAddress2']);
-        $sheet->setCellValue('I11', '〒599-8242');
-        $sheet->setCellValue('K11', '大阪府堺市中区陶器北244-5');
-        $sheet->setCellValue('K12', 'TEL:072-236-8846');
-        $sheet->setCellValue('C13', $customer['CustomerName']);
-        $sheet->setCellValue('K13', 'FAX:072-236-6588');
-        $sheet->setCellValue('F14','様');
-        $sheet->getStyle('J15:P18')
-        ->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-        $sheet->getStyle('J15:P18')
-        ->getBorders()->getVertical()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-        $sheet->setCellValue('B19', ' 毎度お引き立て頂き、有難うございます。');
-        $sheet->setCellValue('B20', '下記の通りご請求申し上げます。');
-        $sheet->setCellValue('H20', ' 本書に関してのお問い合わせは、');
-        $sheet->setCellValue('H21', '上記の担当者までお願い致します。');
-        $sheet->getStyle('A24:P27')
-        ->getBorders()->getVertical()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-        $sheet->getStyle('A24:C25')
-        ->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-        $sheet->getStyle('A24:P25')
-        ->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-        $sheet->setCellValue('A24', '前月請求額');
-        $sheet->setCellValue('A25', '(A)');
-        $sheet->getStyle('A26:C27')
-        ->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-        $sheet->getStyle('D24:F25')
-        ->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-        $sheet->setCellValue('D24', '前月ご入金額');
-        $sheet->setCellValue('D25', '(B)');
-        $sheet->getStyle('D26:F27')
-        ->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-        $sheet->getStyle('G24:I25')
-        ->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-        $sheet->setCellValue('G24', '繰越残高');
-        $sheet->setCellValue('G25', '(C=A-B)');
-        $sheet->getStyle('G26:I27')
-        ->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-        $sheet->getStyle('J24:M25')
-        ->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-        $sheet->setCellValue('J24', '当月ご請求額');
-        $sheet->setCellValue('J25', '(D)');
-        $sheet->getStyle('J26:M27')
-        ->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-        $sheet->getStyle('N24:P25')
-        ->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-        $sheet->setCellValue('N24', '当月ご請求残高');
-        $sheet->setCellValue('N25', '(E=C+D)');
-        $sheet->getStyle('N26:P27')
-        ->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-        
-        $sheet->getStyle('A28:P41')
-        ->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-
-        $sheet->setCellValue('H29', 'お支払予定日');
-        $sheet->setCellValue('G31', '取引銀行');
-        $sheet->getStyle('C35:N37')
-        ->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-        $sheet->getStyle('C36:N37')
-        ->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-        $sheet->getStyle('C36:N37')
-        ->getBorders()->getTop()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE);
-        $sheet->setCellValue('C35', '<御案内>');
-        $sheet->setCellValue('B39', '[商品別御請求額]');
-        $sheet->getStyle('A40:P41')
-        ->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-        $sheet->setCellValue('A40', '商品名');
-        $sheet->setCellValue('E40', '数量');
-        $sheet->setCellValue('G40', '金額');
-        $sheet->setCellValue('I40', '商品名');
-        $sheet->setCellValue('M40', '数量');
-        $sheet->setCellValue('O40', '金額');
 
         $sheet->setCellValue('I'.($row_product_sum), '**商品計**');
         $sheet->setCellValue('I'.($row_oiltax_sum), '**軽油税計**');
         $sheet->setCellValue('I'.($row_consum_sum), '**消費税計**');
  
-        $sheet->getRowDimension($row++)->setRowHeight(50);
-        $sheet->getRowDimension($row++)->setRowHeight(25);        
         //2ページ目(請求明細書)
         //これ以降はイテレータがベースになるので、rowごとの処理(マージ、フォント、内容、罫線)
         
@@ -357,28 +367,31 @@ class Exceloutput extends CI_Controller
         $oiltax_amount_all=0;
         
 
-
+        $row--;
 
         for($page_number=2;$page_number<=$page_all;$page_number++):
 
-
         //セルのマージ
         //ページの最初の行番号
+
+            $sheet->getRowDimension(++$row)->setRowHeight(25);
 
             $sheet->getStyle('A'.$row.':P'.($row+3))
             ->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
             $sheet->mergecells('G'.$row++.':J'.$row--);
             $sheet->getStyle('G'.$row)->getFont()->setSize(24);
             $sheet->setCellValue('G'.$row++, '請求明細書');
-            $sheet->getRowDimension($row++)->setRowHeight(25);        
+            $sheet->getRowDimension($row++)->setRowHeight(25);
+            $sheet->mergecells('N'.$row.':O'.$row);        
             $sheet->setCellValue('N'.$row, 'ページ');
-            $sheet->setCellValue('O'.$row, $page_number.'/'.$page_all);
+            $sheet->setCellValue('P'.$row, $page_number.'/'.$page_all);
         
             $sheet->mergecells('C'.$row.':D'.$row++);
+            $sheet->mergecells('A'.$row.':B'.$row);
             $sheet->setCellValue('A'.$row, '得意先');
-            $sheet->mergecells('B'.$row.':H'.$row);
-            $sheet->setCellValue('B'.$row, $customer['CustomerName']);
-            $sheet->getStyle('A'.$row.':H'.$row)
+            $sheet->mergecells('C'.$row.':I'.$row);
+            $sheet->setCellValue('C'.$row, $customer['CustomerName']);
+            $sheet->getStyle('A'.$row.':I'.$row)
             ->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
 
 
@@ -471,7 +484,7 @@ class Exceloutput extends CI_Controller
                             $sheet->mergecells('A'.$row.':B'.$row);
                             $sheet->mergecells('C'.$row.':F'.$row);
                             $sheet->mergecells('G'.$row.':J'.$row);
-                            $sheet->setCellValue('G'.$row,'軽油税');
+                            $sheet->setCellValue('G'.$row,'<軽油税>');
                             $sheet->mergecells('K'.$row.':L'.$row);
                             $sheet->setCellValue('K'.$row,$oiltax_amount);
                             $oiltax_amount_all+=$oiltax_amount;
@@ -488,7 +501,7 @@ class Exceloutput extends CI_Controller
                             $sheet->mergecells('A'.$row.':B'.$row);
                             $sheet->mergecells('C'.$row.':F'.$row);
                             $sheet->mergecells('G'.$row.':J'.$row);
-                            $sheet->setCellValue('G'.$row,'消費税');
+                            $sheet->setCellValue('G'.$row,'<消費税>');
                             $sheet->mergecells('K'.$row.':L'.$row);
                             $sheet->mergecells('M'.$row.':N'.$row);
                             $sheet->mergecells('O'.$row.':P'.$row);
@@ -510,7 +523,7 @@ class Exceloutput extends CI_Controller
 
                         $row++;
 
-                        if ($table_row>11):
+                        if ($table_row>8):
 
                             break;
 
@@ -575,19 +588,21 @@ class Exceloutput extends CI_Controller
                
             endfor;
 
-            $sheet->getRowDimension(++$row)->setRowHeight(25);
+           
             
-            $row++;
+            
 
         endfor;
 
         $item_subtotal=0;
-
+        $sheet->getStyle('J26')->getFont()->setSize(20);
         $sheet->setCellValue('J26',round($all_total));
+        $sheet->getStyle('N26')->getFont()->setSize(20);
+        $sheet->setCellValue('N26',round($all_total));
         $sheet->setCellValue('A'.$row_table_start,'軽油');
         $sheet->setCellValue('E'.$row_table_start,$lightoil_amount_all);
         $sheet->setCellValue('G'.$row_table_start,round($lightoil_subtotal_all));
-        $item_subtotal+=$lightoil_amount_all;
+        $item_subtotal+=$lightoil_subtotal_all;
         $sheet->setCellValue('O'.($row_product_sum), round($item_subtotal));
         $sheet->setCellValue('M'.($row_oiltax_sum), $oiltax_amount_all);
         $sheet->setCellValue('O'.($row_oiltax_sum), round($oiltax_total_all));
